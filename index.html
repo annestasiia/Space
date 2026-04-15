@@ -33,13 +33,20 @@
 
     /* ── Screen system ─────────────────────────────────────────────────── */
     .screen { display: none; min-height: 100dvh; }
-    .screen.active { display: flex; flex-direction: column; animation: slideIn .55s cubic-bezier(.16,1,.3,1) both; }
+    .screen.active { display: flex; flex-direction: column; animation: pageFadeIn .5s ease both; }
     .screen.result-screen.active { display: block; overflow-y: auto;
       -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 
-    @keyframes slideIn { from { opacity:0; transform:translateX(22px); } to { opacity:1; transform:translateX(0); } }
+    /* Apple-style: pure fade + subtle vertical rise, no horizontal slide */
+    @keyframes pageFadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
 
-    .wrap { max-width: 420px; margin: 0 auto; width: 100%; }
+    /* .wrap fills the screen height so justify-content:center in .content
+       centres the question relative to the full viewport, not just content height */
+    .wrap { max-width: 420px; margin: 0 auto; width: 100%;
+            flex: 1; display: flex; flex-direction: column; }
     .pad  { padding: 0 20px; }
 
     /* ── Typography ────────────────────────────────────────────────────── */
@@ -57,8 +64,8 @@
     .back-btn:hover { opacity:.5; }
 
     /* ── Content area ──────────────────────────────────────────────────── */
-    .content { flex:1; display:flex; flex-direction:column; justify-content:center; padding: 32px 20px 0; }
-    .footer  { padding: 20px 20px 36px; }
+    .content { flex:1; display:flex; flex-direction:column; justify-content:center; padding: 28px 20px 28px; }
+    .footer  { padding: 16px 20px 36px; }
 
     /* ── Activity cards ────────────────────────────────────────────────── */
     .card-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -157,14 +164,15 @@
     /* ── Splash screen ─────────────────────────────────────────────────── */
     #screen-splash { background:var(--bg); position:fixed; inset:0; z-index:100;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:18px;
       animation: splashIn .5s ease both; transition:opacity .5s ease; }
     #screen-splash.exit { opacity:0; pointer-events:none; }
     @keyframes splashIn { from{opacity:0} to{opacity:1} }
 
-    .splash-tagline { position:absolute; top:56px; font-size:14px;
-      letter-spacing:.22em; text-transform:uppercase; color:var(--fg-subtle);
+    .splash-tagline { font-size:14px; letter-spacing:.22em; text-transform:uppercase;
+      color:var(--fg-subtle); text-align:center;
       animation: fadeRise .7s ease .1s both; }
-    .splash-logo { position:absolute; bottom:56px; font-size:13px; font-weight:500;
+    .splash-logo { position:absolute; bottom:52px; font-size:13px; font-weight:500;
       letter-spacing:.14em; animation: fadeRise .7s ease .9s both; }
     @keyframes fadeRise { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 
@@ -175,33 +183,17 @@
       transition:opacity var(--t); }
     .theme-toggle:hover { opacity:.6; }
 
-    /* ── Cyclist SVG + city scene ─────────────────────────────────────── */
-    @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-3px)} }
+    /* ── Cyclist SVG ───────────────────────────────────────────────────── */
+    .splash-cyclist {
+      color: var(--fg-subtle);
+      animation: fadeRise .7s ease .5s both, bounce .9s ease-in-out .5s infinite;
+    }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
 
     .wheel-front { transform-origin: 296px 285px; animation: wspin .7s linear infinite; }
     .wheel-rear  { transform-origin: 120px 290px; animation: wspin .7s linear infinite; }
     @keyframes wspin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-    /* Splash scene container */
-    .splash-scene {
-      position: relative; width: 300px; height: 118px; overflow: hidden;
-      animation: fadeRise .7s ease .5s both;
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%);
-      mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%);
-    }
-    /* Scrolling city strip */
-    .city-strip {
-      position: absolute; bottom: 0; left: 0; display: flex; align-items: flex-end;
-      color: var(--fg); opacity: 0.28;
-      animation: cityScroll 9s linear infinite;
-    }
-    @keyframes cityScroll { from{transform:translateX(0)} to{transform:translateX(-400px)} }
-    /* Cyclist centered above strip */
-    .cyclist-figure {
-      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-      animation: bounce .85s ease-in-out infinite;
-      color: var(--fg); z-index: 2;
-    }
     /* Splash logo 's' grey */
     .splash-logo .s { color: var(--fg-subtle); }
 
@@ -275,129 +267,30 @@
      ╚══════════════════════════════════════════════╝ -->
 <div id="screen-splash">
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◑</button>
-  <p class="splash-tagline">Your space is everywhere</p>
 
-  <div class="splash-scene">
-    <!-- Scrolling city background (2 identical strips for seamless loop) -->
-    <div class="city-strip">
-      <!-- Strip 1 -->
-      <svg width="400" height="100" viewBox="0 0 400 100" fill="none" aria-hidden="true">
-        <line x1="0" y1="98" x2="400" y2="98" stroke="currentColor" stroke-width="1"/>
-        <!-- Tree 1 -->
-        <line x1="28" y1="98" x2="28" y2="72" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M13,79 Q28,52 43,79" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <!-- Building 1 tall -->
-        <path d="M58,98 L58,26 L93,26 L93,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="64" y="34" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="34" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="64" y="48" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="48" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="64" y="62" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="62" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="64" y="76" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="76" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <!-- Building 2 medium -->
-        <path d="M106,98 L106,50 L141,50 L141,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="111" y="57" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="124" y="57" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="111" y="70" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="124" y="70" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="111" y="83" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="124" y="83" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <!-- Tree 2 bushy -->
-        <line x1="160" y1="98" x2="160" y2="70" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M143,78 Q160,50 177,78" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <path d="M149,87 Q160,70 171,87" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        <!-- Building 3 tallest -->
-        <path d="M192,98 L192,16 L237,16 L237,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="198" y="24" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="24" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="198" y="39" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="39" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="198" y="54" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="54" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="198" y="69" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="69" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <!-- Small house -->
-        <path d="M252,98 L252,66 L273,50 L294,66 L294,98" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
-        <path d="M264,98 L264,77 L282,77 L282,98" stroke="currentColor" stroke-width="1.5" fill="none"/>
-        <rect x="261" y="58" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <!-- Tree 3 -->
-        <line x1="316" y1="98" x2="316" y2="73" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M300,81 Q316,55 332,81" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <!-- Building 4 short/wide -->
-        <path d="M348,98 L348,57 L390,57 L390,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="354" y="64" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="368" y="64" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="354" y="78" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="368" y="78" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-      </svg>
-      <!-- Strip 2 (identical — seamless loop) -->
-      <svg width="400" height="100" viewBox="0 0 400 100" fill="none" aria-hidden="true">
-        <line x1="0" y1="98" x2="400" y2="98" stroke="currentColor" stroke-width="1"/>
-        <line x1="28" y1="98" x2="28" y2="72" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M13,79 Q28,52 43,79" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <path d="M58,98 L58,26 L93,26 L93,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="64" y="34" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="34" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="64" y="48" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="48" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="64" y="62" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="62" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="64" y="76" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="76" y="76" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <path d="M106,98 L106,50 L141,50 L141,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="111" y="57" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="124" y="57" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="111" y="70" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="124" y="70" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="111" y="83" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="124" y="83" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <line x1="160" y1="98" x2="160" y2="70" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M143,78 Q160,50 177,78" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <path d="M149,87 Q160,70 171,87" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        <path d="M192,98 L192,16 L237,16 L237,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="198" y="24" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="24" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="198" y="39" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="39" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="198" y="54" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="54" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="198" y="69" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="212" y="69" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <path d="M252,98 L252,66 L273,50 L294,66 L294,98" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
-        <path d="M264,98 L264,77 L282,77 L282,98" stroke="currentColor" stroke-width="1.5" fill="none"/>
-        <rect x="261" y="58" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <line x1="316" y1="98" x2="316" y2="73" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <path d="M300,81 Q316,55 332,81" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <path d="M348,98 L348,57 L390,57 L390,98" stroke="currentColor" stroke-width="1.8" fill="none"/>
-        <rect x="354" y="64" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="368" y="64" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="354" y="78" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-        <rect x="368" y="78" width="9" height="8" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/>
-      </svg>
-    </div>
-    <!-- Cyclist (centered, rides above the city) -->
-    <div class="cyclist-figure">
-      <svg width="68" height="68" viewBox="0 0 400 400" fill="none" aria-hidden="true">
-        <g class="wheel-front">
-          <path d="M249.664 249.389C286.488 208.937 359.322 253.23 327.164 304.783C291.159 362.507 232.271 329.705 243.466 268.029" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        </g>
-        <g class="wheel-rear">
-          <path d="M65.0243 266.147C65.0243 262.054 74.5339 243.842 93.7567 235.43C130.903 219.174 175.048 256.432 157.514 297.979C132.03 358.365 68.5383 339.106 64 279.191" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        </g>
-        <path d="M235.31 206.358C218.827 210.543 183.008 197.485 169.021 207.9C155.658 217.856 146.537 245.714 135.881 259.316C134.104 261.584 112.011 282.824 112.576 284.509C113.003 285.783 162.571 283.484 165.399 283.484C168.168 283.484 189.211 285.547 191.81 282.967C204.473 270.395 264.32 168.847 279.846 196.589" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M242.073 217.442C255.624 240.398 263.912 271.522 283.893 288.941" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M192.824 276.61C200.683 304.809 138.164 288.808 137.043 285.234C135.201 279.357 146.845 278.371 152.26 276.073C161.688 272.064 180.856 275.073 186.231 277.152" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M142.244 174.272C171.066 203.819 176.281 236.034 168.933 271.403" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M142.244 174.272C157.363 159.074 177.134 140.251 190.81 132.452" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M195.247 137.848C198.618 151.996 195.963 166.977 198.517 181.017" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M200.253 182.547C219.386 180.482 234.183 196.703 251.516 199.904" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M206.655 97.6401C208.659 90.0784 214.017 83.3186 219.778 78.1007C225.626 72.807 239.029 72.6287 246.526 73.4754C294.218 78.876 219.975 185.632 205.649 105.349" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M248.733 98.726C241.303 95.7086 232.93 95.2794 224.908 94.2216C126.965 81.3284 239.561 39.3191 259.611 87.723" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
+  <!-- Cyclist silhouette (grey, above tagline) -->
+  <div class="splash-cyclist">
+    <svg width="80" height="80" viewBox="0 0 400 400" fill="none" aria-hidden="true">
+      <g class="wheel-front">
+        <path d="M249.664 249.389C286.488 208.937 359.322 253.23 327.164 304.783C291.159 362.507 232.271 329.705 243.466 268.029" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <g class="wheel-rear">
+        <path d="M65.0243 266.147C65.0243 262.054 74.5339 243.842 93.7567 235.43C130.903 219.174 175.048 256.432 157.514 297.979C132.03 358.365 68.5383 339.106 64 279.191" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <path d="M235.31 206.358C218.827 210.543 183.008 197.485 169.021 207.9C155.658 217.856 146.537 245.714 135.881 259.316C134.104 261.584 112.011 282.824 112.576 284.509C113.003 285.783 162.571 283.484 165.399 283.484C168.168 283.484 189.211 285.547 191.81 282.967C204.473 270.395 264.32 168.847 279.846 196.589" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M242.073 217.442C255.624 240.398 263.912 271.522 283.893 288.941" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M192.824 276.61C200.683 304.809 138.164 288.808 137.043 285.234C135.201 279.357 146.845 278.371 152.26 276.073C161.688 272.064 180.856 275.073 186.231 277.152" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M142.244 174.272C171.066 203.819 176.281 236.034 168.933 271.403" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M142.244 174.272C157.363 159.074 177.134 140.251 190.81 132.452" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M195.247 137.848C198.618 151.996 195.963 166.977 198.517 181.017" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M200.253 182.547C219.386 180.482 234.183 196.703 251.516 199.904" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M206.655 97.6401C208.659 90.0784 214.017 83.3186 219.778 78.1007C225.626 72.807 239.029 72.6287 246.526 73.4754C294.218 78.876 219.975 185.632 205.649 105.349" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M248.733 98.726C241.303 95.7086 232.93 95.2794 224.908 94.2216C126.965 81.3284 239.561 39.3191 259.611 87.723" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </div>
+
+  <!-- Tagline centered below cyclist -->
+  <p class="splash-tagline">Your space is everywhere</p>
 
   <p class="splash-logo">
     <span class="s">s</span><span class="pace">pace</span>
@@ -1166,11 +1059,24 @@ function parseDistKm(activity, param) {
 }
 
 function calcDuration(distKm, activity) {
+  // Kept for legacy use; prefer formatOSRMDuration for displayed route time
   const spd = SPEEDS[activity] || 5;
   const h = distKm / spd;
   const hh = Math.floor(h);
   const mm = Math.round((h - hh) * 60);
   return hh > 0 ? hh + 'h ' + mm + 'min' : '~' + mm + ' min';
+}
+
+/**
+ * Format OSRM total duration (seconds) as human-readable string.
+ * Sums all legs automatically via routes[0].duration.
+ */
+function formatOSRMDuration(seconds) {
+  const totalMin = Math.round(seconds / 60);
+  if (totalMin < 60) return '~' + totalMin + ' min';
+  const h  = Math.floor(totalMin / 60);
+  const m  = totalMin % 60;
+  return m > 0 ? h + 'h ' + m + 'min' : h + 'h';
 }
 
 function bearingTo(lat1, lng1, lat2, lng2) {
@@ -1454,7 +1360,7 @@ async function generateRoute() {
     document.getElementById('r-via').textContent = destName?`via ${destName}`:'';
     document.getElementById('r-via-cap').textContent = destName?`via ${destName}`:'';
     document.getElementById('r-dist').textContent = formatDist(Math.round(osmRoute.distance));
-    document.getElementById('r-time').textContent = calcDuration(osmRoute.distance/1000, S.activity);
+    document.getElementById('r-time').textContent = formatOSRMDuration(osmRoute.duration);
     document.getElementById('r-type').textContent = isLoop?'Loop':'One-way';
     document.getElementById('r-start').textContent = S.startLabel||'Your location';
     const dl = document.getElementById('r-dest-line');
