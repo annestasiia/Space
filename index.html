@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Motion One — Framer Motion spring physics for vanilla JS -->
+  <script type="module">
+    try {
+      const { animate, spring } = await import('https://esm.sh/motion@10.18.0');
+      window.__M = { animate, spring };
+    } catch(e) { /* inline fallback used */ }
+  </script>
 
   <style>
     /* ── Reset & base ──────────────────────────────────────────────────── */
@@ -33,15 +40,11 @@
 
     /* ── Screen system ─────────────────────────────────────────────────── */
     .screen { display: none; min-height: 100dvh; }
-    .screen.active { display: flex; flex-direction: column; animation: pageFadeIn .5s ease both; }
+    .screen.active { display: flex; flex-direction: column; }
     .screen.result-screen.active { display: block; overflow-y: auto;
       -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 
-    /* Apple-style: pure fade + subtle vertical rise, no horizontal slide */
-    @keyframes pageFadeIn {
-      from { opacity: 0; transform: translateY(14px); }
-      to   { opacity: 1; transform: translateY(0);    }
-    }
+    /* Transitions handled in JS via springFadeIn() */
 
     /* .wrap fills the screen height so justify-content:center in .content
        centres the question relative to the full viewport, not just content height */
@@ -183,17 +186,6 @@
       transition:opacity var(--t); }
     .theme-toggle:hover { opacity:.6; }
 
-    /* ── Cyclist SVG ───────────────────────────────────────────────────── */
-    .splash-cyclist {
-      color: var(--fg-subtle);
-      animation: fadeRise .7s ease .5s both, bounce .9s ease-in-out .5s infinite;
-    }
-    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
-
-    .wheel-front { transform-origin: 296px 285px; animation: wspin .7s linear infinite; }
-    .wheel-rear  { transform-origin: 120px 290px; animation: wspin .7s linear infinite; }
-    @keyframes wspin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-
     /* Splash logo 's' grey */
     .splash-logo .s { color: var(--fg-subtle); }
 
@@ -267,31 +259,7 @@
      ╚══════════════════════════════════════════════╝ -->
 <div id="screen-splash">
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◑</button>
-
-  <!-- Cyclist silhouette (grey, above tagline) -->
-  <div class="splash-cyclist">
-    <svg width="80" height="80" viewBox="0 0 400 400" fill="none" aria-hidden="true">
-      <g class="wheel-front">
-        <path d="M249.664 249.389C286.488 208.937 359.322 253.23 327.164 304.783C291.159 362.507 232.271 329.705 243.466 268.029" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
-      <g class="wheel-rear">
-        <path d="M65.0243 266.147C65.0243 262.054 74.5339 243.842 93.7567 235.43C130.903 219.174 175.048 256.432 157.514 297.979C132.03 358.365 68.5383 339.106 64 279.191" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
-      <path d="M235.31 206.358C218.827 210.543 183.008 197.485 169.021 207.9C155.658 217.856 146.537 245.714 135.881 259.316C134.104 261.584 112.011 282.824 112.576 284.509C113.003 285.783 162.571 283.484 165.399 283.484C168.168 283.484 189.211 285.547 191.81 282.967C204.473 270.395 264.32 168.847 279.846 196.589" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M242.073 217.442C255.624 240.398 263.912 271.522 283.893 288.941" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M192.824 276.61C200.683 304.809 138.164 288.808 137.043 285.234C135.201 279.357 146.845 278.371 152.26 276.073C161.688 272.064 180.856 275.073 186.231 277.152" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M142.244 174.272C171.066 203.819 176.281 236.034 168.933 271.403" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M142.244 174.272C157.363 159.074 177.134 140.251 190.81 132.452" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M195.247 137.848C198.618 151.996 195.963 166.977 198.517 181.017" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M200.253 182.547C219.386 180.482 234.183 196.703 251.516 199.904" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M206.655 97.6401C208.659 90.0784 214.017 83.3186 219.778 78.1007C225.626 72.807 239.029 72.6287 246.526 73.4754C294.218 78.876 219.975 185.632 205.649 105.349" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M248.733 98.726C241.303 95.7086 232.93 95.2794 224.908 94.2216C126.965 81.3284 239.561 39.3191 259.611 87.723" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </div>
-
-  <!-- Tagline centered below cyclist -->
   <p class="splash-tagline">Your space is everywhere</p>
-
   <p class="splash-logo">
     <span class="s">s</span><span class="pace">pace</span>
   </p>
@@ -700,11 +668,56 @@ function toggleTheme() {
 // ═══════════════════════════════════════════════════════════════════════════
 let loadingWordInterval = null;
 
+// ── Spring physics entrance (stiffness:300 damping:30 = iOS feel) ───────────
+// Uses Motion One (Framer Motion for vanilla JS) if loaded via ESM,
+// otherwise falls back to identical physics implemented inline.
+function springFadeIn(el) {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(14px)';
+
+  if (window.__M) {
+    // Motion One path — exact Framer Motion spring
+    window.__M.animate(
+      el,
+      { opacity: [0, 1], transform: ['translateY(14px)', 'translateY(0px)'] },
+      { easing: window.__M.spring({ stiffness: 300, damping: 30 }) }
+    );
+  } else {
+    // Inline fallback — same spring equation: a = -k·x - b·v
+    const k = 300, b = 30;
+    let pos = 14, vel = 0, startT = null, prevT = null;
+
+    function tick(t) {
+      if (!startT) { startT = t; prevT = t; requestAnimationFrame(tick); return; }
+      const dt = Math.min((t - prevT) / 1000, 0.05);
+      prevT = t;
+      vel += (-k * pos - b * vel) * dt;
+      pos += vel * dt;
+      el.style.opacity = String(Math.min(1, (t - startT) / 160));
+      el.style.transform = `translateY(${pos.toFixed(3)}px)`;
+      if (Math.abs(pos) > 0.05 || Math.abs(vel) > 0.3) {
+        requestAnimationFrame(tick);
+      } else {
+        el.style.opacity = '';
+        el.style.transform = '';
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+}
+
 function goTo(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.opacity = '';
+    s.style.transform = '';
+  });
   const el = document.getElementById('screen-' + id);
-  if (el) { el.classList.add('active'); el.scrollTop = 0; }
+  if (!el) return;
+  el.classList.add('active');
+  el.scrollTop = 0;
   window.scrollTo(0, 0);
+  springFadeIn(el);
 
   if (id !== 'loading' && loadingWordInterval) {
     clearInterval(loadingWordInterval);
@@ -728,12 +741,13 @@ function clearErr(id) {
   const splash = document.getElementById('screen-splash');
   const step1  = document.getElementById('screen-step1');
   step1.style.display = 'none'; // hide until splash done
-  setTimeout(()=>{ splash.classList.add('exit'); }, 9000);
+  setTimeout(()=>{ splash.classList.add('exit'); }, 3500);
   setTimeout(()=>{
     splash.style.display = 'none';
     step1.style.display = '';
     step1.classList.add('active');
-  }, 10000);
+    springFadeIn(step1);
+  }, 4000);
 })();
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1288,37 +1302,29 @@ async function generateRoute() {
       const distKm = parseDistKm(S.activity, S.mainParam);
       isLoop = true;
 
-      // ── Circular loop with 3 evenly-spaced waypoints ─────────────────
-      // Radius so that 4 equal chords ≈ distKm total:  r = distKm/(4*√2)
-      const r = distKm * 0.177;
+      // ── True circular loop: N → E → S → W → start ────────────────────
+      // radius = circumference / (2π) so 4-waypoint path ≈ distKm
+      const radiusM = (distKm * 1000) / (2 * Math.PI);
 
-      // Orient the loop towards Weimar centre so waypoints land on real roads
-      const toCenter = bearingTo(lat, lng, WEIMAR_CENTER.lat, WEIMAR_CENTER.lng);
+      // Convert metres → degrees (WGS-84 approximation)
+      const latDeg = radiusM / 111320;
+      const lngDeg = radiusM / (111320 * Math.cos(lat * Math.PI / 180));
 
-      // Place the loop's geometric centre r away from start (towards city)
-      const loopCenter = projectPoint(lat, lng, toCenter, r);
+      // 4 cardinal waypoints, strictly ordered N→E→S→W
+      const wpN = { lat: lat + latDeg, lng: lng          };
+      const wpE = { lat: lat,          lng: lng + lngDeg };
+      const wpS = { lat: lat - latDeg, lng: lng          };
+      const wpW = { lat: lat,          lng: lng - lngDeg };
 
-      // Direction from loop-centre back to start
-      const fromCenter = toCenter + Math.PI;
-
-      // Three waypoints at 90°, 180°, 270° from the "back-to-start" direction:
-      //  wpa = right side,  wpb = far side (farthest from start),  wpc = left side
-      const wpa = projectPoint(loopCenter.lat, loopCenter.lng, fromCenter + Math.PI/2, r);
-      const wpb = projectPoint(loopCenter.lat, loopCenter.lng, fromCenter + Math.PI,   r);
-      const wpc = projectPoint(loopCenter.lat, loopCenter.lng, fromCenter - Math.PI/2, r);
-
-      // Name the route after the nearest known Weimar place to the far waypoint
+      // Name route after nearest known Weimar place to the northern point
       const nearest = Object.values(WEIMAR_PLACES)
-        .sort((a,b) => haversineKm(wpb.lat,wpb.lng,a.lat,a.lng) - haversineKm(wpb.lat,wpb.lng,b.lat,b.lng))[0];
+        .sort((a,b) => haversineKm(wpN.lat,wpN.lng,a.lat,a.lng)
+                     - haversineKm(wpN.lat,wpN.lng,b.lat,b.lng))[0];
       destName = nearest.name;
 
-      // Route: start → right → far → left → start  (true non-overlapping loop)
+      // Route: start → N → E → S → W → start  (different roads each way)
       osmRoute = await osrmRoute(profile, [
-        {lat, lng},
-        {lat:wpa.lat, lng:wpa.lng},
-        {lat:wpb.lat, lng:wpb.lng},
-        {lat:wpc.lat, lng:wpc.lng},
-        {lat, lng}
+        {lat, lng}, wpN, wpE, wpS, wpW, {lat, lng}
       ]);
     } else {
       isLoop = false;
