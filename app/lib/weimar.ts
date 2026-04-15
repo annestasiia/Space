@@ -137,6 +137,15 @@ export function parseRequestedDistanceKm(activity: ActivityType, param: string):
   const kmMatch = p.match(/(\d+(?:\.\d+)?)\s*km/);
   if (kmMatch) return parseFloat(kmMatch[1]);
 
+  // Hours
+  const hourMatch = p.match(/(\d+(?:\.\d+)?)\s*h(?:our)?/);
+  if (hourMatch) {
+    const hours = parseFloat(hourMatch[1]);
+    if (activity === "cycling") return hours * 20;
+    if (activity === "running")  return hours * 10;
+    return hours * 5;
+  }
+
   // Minutes
   const minMatch = p.match(/(\d+)\s*min/);
   if (minMatch) {
@@ -163,7 +172,7 @@ export function parseRequestedDistanceKm(activity: ActivityType, param: string):
     running: 5,
     cycling: 15,
     walking: 4,
-    yoga: 1.2,
+    other: 3,
   };
   return defaults[activity];
 }
@@ -195,7 +204,7 @@ export function selectWaypoint(
 
     // Activity preference
     let activityBonus = 0;
-    if (activity === "yoga" && (place.type === "park" || place.type === "forest")) activityBonus = 0.5;
+    if (activity === "other" && (place.type === "park" || place.type === "forest")) activityBonus = 0.5;
     if (activity === "running" && (place.type === "park" || place.type === "forest")) activityBonus = 0.3;
     if (activity === "cycling") activityBonus = 0; // all destinations ok
     if (activity === "walking" && place.type !== "station") activityBonus = 0.2;
@@ -212,18 +221,19 @@ export function selectWaypoint(
   return scored[0].place;
 }
 
-// ── Yoga destination ──────────────────────────────────────────────────────────
-export function selectYogaDestination(
+// ── One-way destination (for "other" or one-way route types) ─────────────────
+export function selectOneWayDestination(
   startLat: number,
   startLng: number,
   param: string
 ): WeimarPlace {
   const p = param.toLowerCase();
 
-  if (p.includes("water")) return WEIMAR_PLACES.ilmpark;
-  if (p.includes("quiet")) return WEIMAR_PLACES.goethePark;
+  if (p.includes("water") || p.includes("river") || p.includes("lake")) return WEIMAR_PLACES.ilmpark;
+  if (p.includes("quiet") || p.includes("park")) return WEIMAR_PLACES.goethePark;
+  if (p.includes("historic") || p.includes("culture") || p.includes("landmark")) return WEIMAR_PLACES.marktplatz;
 
-  // Nearest park
+  // Nearest park by default
   const parks = Object.values(WEIMAR_PLACES).filter(
     (pl) => pl.type === "park" || pl.type === "forest"
   );
@@ -233,3 +243,6 @@ export function selectYogaDestination(
   );
   return parks[0];
 }
+
+/** @deprecated Use selectOneWayDestination */
+export const selectYogaDestination = selectOneWayDestination;

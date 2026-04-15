@@ -25,6 +25,7 @@ function activityToProfile(activity: ActivityType): OsrmProfile {
   return activity === "cycling" ? "bike" : "foot";
 }
 
+
 // ── Core OSRM request ─────────────────────────────────────────────────────────
 async function osrmRoute(
   profile: OsrmProfile,

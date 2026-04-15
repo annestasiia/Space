@@ -5,23 +5,15 @@ import { ACTIVITY_LABELS } from "../../data/routes";
 import { formatDistance, formatDuration } from "../../lib/routing";
 import { buildGoogleMapsUrl } from "../../lib/googleMaps";
 import RouteMapWrapper from "../ui/RouteMapWrapper";
+import { SpaceLogo } from "./Step1Screen";
 
 interface ResultScreenProps {
   state: AppState;
   onReset: () => void;
 }
 
-function SpaceLogo() {
-  return (
-    <span className="text-sm font-medium tracking-widest select-none">
-      <span className="text-neutral-400">s</span>
-      <span className="text-neutral-900">pace</span>
-    </span>
-  );
-}
-
 export default function ResultScreen({ state, onReset }: ResultScreenProps) {
-  const { activity, routeResult, pois, tags, startLabel, destinationName } = state;
+  const { activity, routeResult, pois, selectedTags, startLabel, destinationName } = state;
   const route = routeResult!;
   const activityLabel = ACTIVITY_LABELS[activity!];
 
@@ -29,54 +21,100 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
 
   const distStr = formatDistance(route.distanceMeters);
   const durStr = formatDuration(route.durationSeconds);
-  const routeType = route.isRoundtrip ? "Roundtrip" : "One-way";
+  const routeType = route.isRoundtrip ? "Loop" : "One-way";
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="flex-1 px-6 py-12 max-w-2xl mx-auto w-full">
-        {/* Brand + Back */}
-        <div className="flex items-center justify-between mb-10">
+    <div
+      className="min-h-[100dvh] flex flex-col"
+      style={{ background: "var(--bg)", color: "var(--fg)" }}
+    >
+      <div className="flex-1 max-w-sm mx-auto w-full px-5 scroll-smooth overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between pt-10 pb-8">
           <button
             onClick={onReset}
-            className="text-sm text-neutral-400 hover:text-neutral-900 transition-colors flex items-center gap-2"
+            className="text-sm transition-opacity hover:opacity-60 flex items-center gap-1.5"
+            style={{ color: "var(--fg-muted)" }}
           >
             ← New route
           </button>
           <SpaceLogo />
         </div>
 
-        {/* Header */}
-        <div className="mb-8">
-          <p className="text-xs tracking-widest uppercase text-neutral-400 mb-3">{activityLabel}</p>
-          <h1 className="text-3xl sm:text-4xl font-light text-neutral-900">Your route is ready</h1>
+        {/* Title */}
+        <div className="mb-7">
+          <p
+            className="text-xs tracking-widest uppercase mb-2"
+            style={{ color: "var(--fg-subtle)" }}
+          >
+            {activityLabel}
+          </p>
+          <h1 className="text-[2rem] font-light leading-tight" style={{ color: "var(--fg)" }}>
+            Your route<br />is ready!
+          </h1>
           {destinationName && (
-            <p className="text-sm text-neutral-500 mt-2">
+            <p className="text-sm mt-2" style={{ color: "var(--fg-muted)" }}>
               via {destinationName}
             </p>
           )}
         </div>
 
         {/* Stats card */}
-        <div className="border border-neutral-200 rounded-xl p-6 mb-6">
-          <div className="grid grid-cols-3 gap-4 mb-5 pb-5 border-b border-neutral-100">
+        <div
+          className="border rounded-2xl p-5 mb-5"
+          style={{ borderColor: "var(--border)", background: "var(--card-bg)" }}
+        >
+          <div
+            className="grid grid-cols-3 gap-3 pb-4 mb-4"
+            style={{ borderBottom: "1px solid var(--border-subtle)" }}
+          >
             <div>
-              <p className="text-xs text-neutral-400 uppercase tracking-wide mb-1">Distance</p>
-              <p className="text-xl font-medium text-neutral-900">{distStr}</p>
+              <p
+                className="text-[10px] uppercase tracking-wide mb-1"
+                style={{ color: "var(--fg-subtle)" }}
+              >
+                Distance
+              </p>
+              <p className="text-lg font-medium" style={{ color: "var(--fg)" }}>
+                {distStr}
+              </p>
             </div>
             <div>
-              <p className="text-xs text-neutral-400 uppercase tracking-wide mb-1">Time</p>
-              <p className="text-xl font-medium text-neutral-900">{durStr}</p>
+              <p
+                className="text-[10px] uppercase tracking-wide mb-1"
+                style={{ color: "var(--fg-subtle)" }}
+              >
+                Time
+              </p>
+              <p className="text-lg font-medium" style={{ color: "var(--fg)" }}>
+                {durStr}
+              </p>
             </div>
             <div>
-              <p className="text-xs text-neutral-400 uppercase tracking-wide mb-1">Type</p>
-              <p className="text-base font-medium text-neutral-900">{routeType}</p>
+              <p
+                className="text-[10px] uppercase tracking-wide mb-1"
+                style={{ color: "var(--fg-subtle)" }}
+              >
+                Type
+              </p>
+              <p className="text-base font-medium" style={{ color: "var(--fg)" }}>
+                {routeType}
+              </p>
             </div>
           </div>
-          {/* Selected tags shown as badges */}
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span key={tag} className="text-xs px-3 py-1.5 bg-neutral-900 text-white rounded-full">
+
+          {/* Selected tags */}
+          {selectedTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs px-2.5 py-1 rounded-full"
+                  style={{
+                    background: "var(--card-active-bg)",
+                    color: "var(--card-active-fg)",
+                  }}
+                >
                   {tag}
                 </span>
               ))}
@@ -84,8 +122,8 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
           )}
         </div>
 
-        {/* Real Leaflet map */}
-        <div className="mb-6">
+        {/* Map */}
+        <div className="mb-5 rounded-2xl overflow-hidden">
           <RouteMapWrapper
             geometry={route.geometry}
             pois={pois}
@@ -95,33 +133,51 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
         </div>
 
         {/* Route info */}
-        <div className="mb-8 space-y-1">
-          <p className="text-sm text-neutral-500">
-            <span className="text-neutral-900 font-medium">Start:</span>{" "}
+        <div className="mb-7 space-y-1.5">
+          <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
+            <span className="font-medium" style={{ color: "var(--fg)" }}>
+              Start:
+            </span>{" "}
             {startLabel || "Your location"} — Weimar
           </p>
           {destinationName && (
-            <p className="text-sm text-neutral-500">
-              <span className="text-neutral-900 font-medium">
+            <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
+              <span className="font-medium" style={{ color: "var(--fg)" }}>
                 {route.isRoundtrip ? "Via:" : "Destination:"}
               </span>{" "}
               {destinationName}, Weimar
             </p>
           )}
-          <p className="text-xs text-neutral-400 mt-2">
-            Route generated via OSRM using OpenStreetMap data · Weimar, Thuringia
+          <p className="text-xs mt-2" style={{ color: "var(--fg-subtle)" }}>
+            Route via OSRM · OpenStreetMap data · Weimar
           </p>
         </div>
 
-        {/* After route */}
+        {/* After the route — POIs */}
         {pois.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-lg font-light text-neutral-900 mb-4">After the route</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mb-8">
+            <h2
+              className="text-base font-light mb-3"
+              style={{ color: "var(--fg)" }}
+            >
+              After the route
+            </h2>
+            <div className="grid grid-cols-1 gap-2.5">
               {pois.map((poi) => (
-                <div key={`${poi.lat}-${poi.lng}`} className="border border-neutral-200 rounded-xl px-4 py-4">
-                  <p className="text-sm font-medium text-neutral-900">{poi.label}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">{poi.sublabel}</p>
+                <div
+                  key={`${poi.lat}-${poi.lng}`}
+                  className="border rounded-xl px-4 py-3.5"
+                  style={{
+                    borderColor: "var(--border)",
+                    background: "var(--card-bg)",
+                  }}
+                >
+                  <p className="text-sm font-medium" style={{ color: "var(--fg)" }}>
+                    {poi.label}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--fg-muted)" }}>
+                    {poi.sublabel}
+                  </p>
                 </div>
               ))}
             </div>
@@ -129,9 +185,13 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
         )}
 
         {/* Action buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-10">
+        <div className="grid grid-cols-2 gap-3 mb-8">
           <button
-            className="py-4 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-700 transition-colors"
+            className="py-4 rounded-2xl text-sm font-medium transition-opacity hover:opacity-80"
+            style={{
+              background: "var(--card-active-bg)",
+              color: "var(--card-active-fg)",
+            }}
             onClick={() => window.open(mapsUrl, "_blank")}
           >
             Start
@@ -140,18 +200,24 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="py-4 border border-neutral-200 text-neutral-900 rounded-xl text-sm font-medium hover:border-neutral-500 transition-colors text-center flex items-center justify-center"
+            className="py-4 border rounded-2xl text-sm font-medium text-center flex items-center justify-center transition-opacity hover:opacity-70"
+            style={{
+              borderColor: "var(--border)",
+              color: "var(--fg)",
+            }}
           >
-            Open in Google Maps
+            Google Maps
           </a>
           <button
             onClick={onReset}
-            className="py-4 border border-neutral-200 text-neutral-900 rounded-xl text-sm font-medium hover:border-neutral-500 transition-colors"
+            className="py-4 border rounded-2xl text-sm font-medium transition-opacity hover:opacity-70"
+            style={{ borderColor: "var(--border)", color: "var(--fg)" }}
           >
             Rebuild
           </button>
           <button
-            className="py-4 border border-neutral-200 text-neutral-900 rounded-xl text-sm font-medium hover:border-neutral-500 transition-colors"
+            className="py-4 border rounded-2xl text-sm font-medium transition-opacity hover:opacity-70"
+            style={{ borderColor: "var(--border)", color: "var(--fg)" }}
             onClick={() => alert("Save feature coming soon.")}
           >
             Save
@@ -159,7 +225,9 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
         </div>
 
         {/* Footer */}
-        <p className="text-sm text-neutral-400 text-center font-light">Have a great workout.</p>
+        <p className="text-sm text-center font-light pb-10" style={{ color: "var(--fg-subtle)" }}>
+          Have a great time out there.
+        </p>
       </div>
     </div>
   );

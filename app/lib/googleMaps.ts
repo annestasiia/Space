@@ -22,7 +22,7 @@ type GoogleTravelMode = "walking" | "bicycling" | "driving" | "transit";
 
 function activityToTravelMode(activity: ActivityType): GoogleTravelMode {
   if (activity === "cycling") return "bicycling";
-  return "walking"; // running, walking, yoga → walking mode
+  return "walking"; // running, walking, other → walking mode
 }
 
 /**

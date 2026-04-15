@@ -34,7 +34,7 @@ function buildQuery(lat: number, lng: number, radius: number, activity: Activity
   let elements: string;
   if (activity === "cycling") {
     elements = [cafeFilter, drinkFilter, bikeShopFilter, bikeRepairFilter].join("\n  ");
-  } else if (activity === "yoga") {
+  } else if (activity === "other") {
     elements = [drinkFilter, parkFilter, benchFilter, cafeFilter].join("\n  ");
   } else {
     // running / walking
