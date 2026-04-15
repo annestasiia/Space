@@ -6,6 +6,7 @@
   <title>space — urban routes</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     /* ── Reset & base ──────────────────────────────────────────────────── */
@@ -13,7 +14,7 @@
 
     :root {
       --bg: #ffffff; --fg: #171717; --fg-muted: #6b7280; --fg-subtle: #a3a3a3;
-      --border: #e5e5e5; --border-sub: #f2f2f2; --card: #fafafa;
+      --border: #e5e5e5; --border-sub: #f2f2f2; --card: #ffffff;
       --active-bg: #171717; --active-fg: #ffffff;
       --input-bg: #ffffff; --tag-bg: #f5f5f5;
       --r: 16px; --r-full: 9999px; --t: 150ms ease;
@@ -32,11 +33,11 @@
 
     /* ── Screen system ─────────────────────────────────────────────────── */
     .screen { display: none; min-height: 100dvh; }
-    .screen.active { display: flex; flex-direction: column; animation: slideIn .3s cubic-bezier(.25,.46,.45,.94) both; }
+    .screen.active { display: flex; flex-direction: column; animation: slideIn .55s cubic-bezier(.16,1,.3,1) both; }
     .screen.result-screen.active { display: block; overflow-y: auto;
       -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 
-    @keyframes slideIn { from { opacity:0; transform:translateX(18px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(22px); } to { opacity:1; transform:translateX(0); } }
 
     .wrap { max-width: 420px; margin: 0 auto; width: 100%; }
     .pad  { padding: 0 20px; }
@@ -56,13 +57,13 @@
     .back-btn:hover { opacity:.5; }
 
     /* ── Content area ──────────────────────────────────────────────────── */
-    .content { flex:1; padding: 32px 20px 0; }
+    .content { flex:1; display:flex; flex-direction:column; justify-content:center; padding: 32px 20px 0; }
     .footer  { padding: 20px 20px 36px; }
 
     /* ── Activity cards ────────────────────────────────────────────────── */
     .card-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .card-btn  { text-align:left; padding:20px; border:1px solid var(--border);
-      border-radius:var(--r); background:var(--card); cursor:pointer;
+      border-radius:var(--r); background:var(--card); cursor:pointer; color:var(--fg);
       transition:border-color var(--t), background var(--t), color var(--t); }
     .card-btn:hover { border-color:var(--fg-muted); }
     .card-btn.active { background:var(--active-bg); border-color:var(--active-bg); color:var(--active-fg); }
@@ -86,18 +87,11 @@
     .tag-chip:hover { border-color:var(--fg-muted); }
     .tag-chip.active { background:var(--active-bg); border-color:var(--active-bg); color:var(--active-fg); }
 
-    /* ── Category accordion ────────────────────────────────────────────── */
-    .cat-row   { border-bottom:1px solid var(--border-sub); }
-    .cat-hdr   { display:flex; align-items:center; justify-content:space-between;
-      padding:13px 0; cursor:pointer; background:none; border:none;
-      width:100%; font-family:inherit; color:var(--fg); }
-    .cat-hdr .cat-name { font-size:14px; font-weight:500; display:flex; align-items:center; gap:8px; }
-    .cat-hdr .cat-arrow { font-size:12px; color:var(--fg-subtle); transition:transform .2s; }
-    .cat-hdr.open .cat-arrow { transform:rotate(180deg); }
-    .cat-tags  { display:none; flex-wrap:wrap; gap:7px; padding-bottom:12px; }
-    .cat-tags.open { display:flex; }
-    .cat-count { font-size:11px; padding:2px 7px; border-radius:var(--r-full);
-      background:var(--active-bg); color:var(--active-fg); }
+    /* ── Hint chips ────────────────────────────────────────────────────── */
+    .hint-chip { padding:6px 12px; border:1px solid var(--border); border-radius:var(--r-full);
+      background:var(--card); font-size:12px; color:var(--fg-muted); cursor:pointer;
+      font-family:inherit; transition:all var(--t); }
+    .hint-chip:hover { border-color:var(--fg-muted); color:var(--fg); }
 
     /* ── Start type buttons ────────────────────────────────────────────── */
     .start-btn { display:block; width:100%; text-align:left; padding:16px 20px;
@@ -182,13 +176,14 @@
     .theme-toggle:hover { opacity:.6; }
 
     /* ── Cyclist SVG ───────────────────────────────────────────────────── */
-    .cyclist-wrap { animation: bounce .85s ease-in-out infinite; margin-top:4px; }
+    .cyclist-wrap { animation: bounce .85s ease-in-out infinite, fadeRise .7s ease .5s both; color: #888; }
     @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
-    .cyclist-wrap { animation: bounce .85s ease-in-out infinite, fadeRise .7s ease .5s both; }
 
-    .wheel-l { transform-origin: 18px 40px; animation: wspin .72s linear infinite; }
-    .wheel-r { transform-origin: 62px 40px; animation: wspin .72s linear infinite; }
+    .wheel-front { transform-origin: 296px 285px; animation: wspin .7s linear infinite; }
+    .wheel-rear  { transform-origin: 120px 290px; animation: wspin .7s linear infinite; }
     @keyframes wspin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    [data-theme="dark"] .cyclist-wrap { color: #888; }
 
     /* ── Loading screen ────────────────────────────────────────────────── */
     #screen-loading { align-items:center; justify-content:center; flex-direction:column;
@@ -263,44 +258,22 @@
   <p class="splash-tagline">Your space is everywhere</p>
 
   <div class="cyclist-wrap">
-    <svg viewBox="0 0 80 55" width="72" height="50" fill="none" aria-hidden="true">
-      <!-- Rear wheel -->
-      <circle cx="18" cy="40" r="11" stroke="#888" stroke-width="1.8"/>
-      <g class="wheel-l">
-        <line x1="18" y1="29" x2="18" y2="51" stroke="#888" stroke-width="1"/>
-        <line x1="7"  y1="40" x2="29" y2="40" stroke="#888" stroke-width="1"/>
-        <line x1="10" y1="32" x2="26" y2="48" stroke="#888" stroke-width=".8"/>
-        <line x1="26" y1="32" x2="10" y2="48" stroke="#888" stroke-width=".8"/>
+    <svg width="90" height="90" viewBox="0 0 400 400" fill="none" aria-hidden="true">
+      <g class="wheel-front">
+        <path d="M249.664 249.389C286.488 208.937 359.322 253.23 327.164 304.783C291.159 362.507 232.271 329.705 243.466 268.029" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
-      <!-- Front wheel -->
-      <circle cx="62" cy="40" r="11" stroke="#888" stroke-width="1.8"/>
-      <g class="wheel-r">
-        <line x1="62" y1="29" x2="62" y2="51" stroke="#888" stroke-width="1"/>
-        <line x1="51" y1="40" x2="73" y2="40" stroke="#888" stroke-width="1"/>
-        <line x1="54" y1="32" x2="70" y2="48" stroke="#888" stroke-width=".8"/>
-        <line x1="70" y1="32" x2="54" y2="48" stroke="#888" stroke-width=".8"/>
+      <g class="wheel-rear">
+        <path d="M65.0243 266.147C65.0243 262.054 74.5339 243.842 93.7567 235.43C130.903 219.174 175.048 256.432 157.514 297.979C132.03 358.365 68.5383 339.106 64 279.191" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
-      <!-- Frame -->
-      <line x1="18" y1="40" x2="40" y2="40" stroke="#888" stroke-width="1.5"/>
-      <line x1="40" y1="40" x2="44" y2="21" stroke="#888" stroke-width="1.5"/>
-      <line x1="18" y1="40" x2="44" y2="21" stroke="#888" stroke-width="1.3"/>
-      <line x1="40" y1="40" x2="62" y2="27" stroke="#888" stroke-width="1.5"/>
-      <line x1="44" y1="21" x2="62" y2="18" stroke="#888" stroke-width="1.5"/>
-      <line x1="62" y1="18" x2="62" y2="40" stroke="#888" stroke-width="1.5"/>
-      <!-- Saddle -->
-      <line x1="42" y1="19" x2="52" y2="19" stroke="#888" stroke-width="2"/>
-      <line x1="44" y1="21" x2="47" y2="19" stroke="#888" stroke-width="1.2"/>
-      <!-- Handlebar -->
-      <line x1="62" y1="18" x2="60" y2="13" stroke="#888" stroke-width="1.5"/>
-      <line x1="57" y1="13" x2="65" y2="13" stroke="#888" stroke-width="2"/>
-      <!-- Rider -->
-      <circle cx="57" cy="8" r="4" fill="#999"/>
-      <line x1="57" y1="12" x2="51" y2="21" stroke="#999" stroke-width="1.8"/>
-      <line x1="55" y1="16" x2="62" y2="13" stroke="#999" stroke-width="1.5"/>
-      <line x1="51" y1="21" x2="43" y2="31" stroke="#999" stroke-width="1.8"/>
-      <line x1="43" y1="31" x2="40" y2="38" stroke="#999" stroke-width="1.8"/>
-      <line x1="51" y1="21" x2="55" y2="31" stroke="#999" stroke-width="1.8"/>
-      <line x1="55" y1="31" x2="52" y2="37" stroke="#999" stroke-width="1.8"/>
+      <path d="M235.31 206.358C218.827 210.543 183.008 197.485 169.021 207.9C155.658 217.856 146.537 245.714 135.881 259.316C134.104 261.584 112.011 282.824 112.576 284.509C113.003 285.783 162.571 283.484 165.399 283.484C168.168 283.484 189.211 285.547 191.81 282.967C204.473 270.395 264.32 168.847 279.846 196.589" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M242.073 217.442C255.624 240.398 263.912 271.522 283.893 288.941" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M192.824 276.61C200.683 304.809 138.164 288.808 137.043 285.234C135.201 279.357 146.845 278.371 152.26 276.073C161.688 272.064 180.856 275.073 186.231 277.152" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M142.244 174.272C171.066 203.819 176.281 236.034 168.933 271.403" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M142.244 174.272C157.363 159.074 177.134 140.251 190.81 132.452" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M195.247 137.848C198.618 151.996 195.963 166.977 198.517 181.017" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M200.253 182.547C219.386 180.482 234.183 196.703 251.516 199.904" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M206.655 97.6401C208.659 90.0784 214.017 83.3186 219.778 78.1007C225.626 72.807 239.029 72.6287 246.526 73.4754C294.218 78.876 219.975 185.632 205.649 105.349" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M248.733 98.726C241.303 95.7086 232.93 95.2794 224.908 94.2216C126.965 81.3284 239.561 39.3191 259.611 87.723" stroke="currentColor" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </div>
 
@@ -390,7 +363,7 @@
       <div class="logo"><span class="s">s</span><span class="pace">pace</span></div>
     </div>
     <div class="content">
-      <h2>Where do you<br>wanna start?</h2>
+      <h2>Where do you<br>want to start?</h2>
       <div class="gap-lg"></div>
       <button class="start-btn" id="s3-loc-btn" onclick="pickStart('current')">
         Use my current location
@@ -399,6 +372,13 @@
         Enter an address
       </button>
       <div class="input-wrap" id="s3-addr-wrap">
+        <div class="addr-hints" id="s3-hints" style="display:none; margin-top:12px; margin-bottom:8px">
+          <p style="font-size:11px; color:var(--fg-subtle); margin-bottom:7px">Try one of these:</p>
+          <div style="display:flex; flex-wrap:wrap; gap:7px">
+            <button class="hint-chip" onclick="fillHint('s3-addr-input','Geschwister-Scholl-Straße 8/15')">Geschwister-Scholl-Straße 8/15</button>
+            <button class="hint-chip" onclick="fillHint('s3-addr-input','Theaterpl. 2')">Theaterpl. 2</button>
+          </div>
+        </div>
         <input type="text" class="input-field" id="s3-addr-input"
           placeholder="Street, place or landmark in Weimar"
           oninput="clearErr('s3-err');checkS3()"
@@ -443,6 +423,13 @@
         <button class="start-btn" id="s4-type-btn" onclick="pickEndMode('type')">Type address</button>
         <button class="start-btn" id="s4-map-btn"  onclick="pickEndMode('map')">Choose on map <span style="font-size:11px;color:var(--fg-subtle)">(auto-select)</span></button>
         <div class="input-wrap" id="s4-end-wrap">
+          <div class="addr-hints" id="s4-hints" style="display:none; margin-top:12px; margin-bottom:8px">
+            <p style="font-size:11px; color:var(--fg-subtle); margin-bottom:7px">Try one of these:</p>
+            <div style="display:flex; flex-wrap:wrap; gap:7px">
+              <button class="hint-chip" onclick="fillHint('s4-end-input','Johann-Heinrich-Gentzplatz 1')">Johann-Heinrich-Gentzplatz 1</button>
+              <button class="hint-chip" onclick="fillHint('s4-end-input','Schopenhauerstraße 2')">Schopenhauerstraße 2</button>
+            </div>
+          </div>
           <input type="text" class="input-field" id="s4-end-input"
             placeholder="Destination address in Weimar"
             oninput="checkS4()"
@@ -468,9 +455,9 @@
     <div class="content">
       <!-- Question + locality -->
       <div class="row-between">
-        <h2>What are you<br>looking for today?</h2>
+        <h2>How do you see<br>your route today?</h2>
         <div class="locality-wrap">
-          <button class="locality-btn" id="locality-btn" onclick="toggleLocalityMenu()">New place?</button>
+          <button class="locality-btn" id="locality-btn" onclick="toggleLocalityMenu()">Know the city?</button>
           <div class="locality-menu" id="locality-menu">
             <button class="locality-opt" data-loc="first-time" onclick="pickLocality(this)">First time here</button>
             <button class="locality-opt" data-loc="local"      onclick="pickLocality(this)">I'm a local</button>
@@ -479,8 +466,9 @@
       </div>
       <div class="gap-lg"></div>
 
-      <!-- Tag categories -->
-      <div id="s5-categories"></div>
+      <!-- Tag categories (chip-btn style) -->
+      <div id="s5-cat-btns" class="chip-row" style="margin-bottom:14px"></div>
+      <div id="s5-subtags"></div>
 
       <!-- Selected tags summary -->
       <div id="s5-selected-row" class="badge-row hidden" style="margin-bottom:20px"></div>
@@ -488,7 +476,7 @@
       <!-- Free-text request -->
       <div class="gap-sm"></div>
       <p class="section-label">Any specific request?</p>
-      <textarea class="input-field" id="s5-wishes" rows="4" id="s5-wishes"></textarea>
+      <textarea class="input-field" id="s5-wishes" rows="4"></textarea>
       <div class="gap-lg"></div>
     </div>
     <div class="footer">
@@ -526,26 +514,34 @@
     <p id="r-via" style="font-size:13px;color:var(--fg-muted);margin-top:6px"></p>
     <div class="gap-md"></div>
 
-    <!-- Stats -->
-    <div class="stats-card">
-      <div class="stats-row">
-        <div><div class="stat-lbl">Distance</div><div class="stat-val" id="r-dist"></div></div>
-        <div><div class="stat-lbl">Time</div><div class="stat-val" id="r-time"></div></div>
-        <div><div class="stat-lbl">Type</div><div class="stat-val sm" id="r-type"></div></div>
+    <div id="r-capture-area">
+      <!-- Stats -->
+      <div class="stats-card">
+        <div class="stats-row">
+          <div><div class="stat-lbl">Distance</div><div class="stat-val" id="r-dist"></div></div>
+          <div><div class="stat-lbl">Time</div><div class="stat-val" id="r-time"></div></div>
+          <div><div class="stat-lbl">Type</div><div class="stat-val sm" id="r-type"></div></div>
+        </div>
+        <div class="badge-row" id="r-badges"></div>
       </div>
-      <div class="badge-row" id="r-badges"></div>
-    </div>
 
-    <!-- Map -->
-    <div id="map"></div>
+      <!-- Soft message (shown when actual distance deviates >25%) -->
+      <div id="r-soft-msg" style="display:none; font-size:13px; color:var(--fg-muted); margin-bottom:16px; font-style:italic;"></div>
 
-    <!-- Route info -->
-    <div style="margin-bottom:28px">
-      <p style="font-size:13px;color:var(--fg-muted);margin-bottom:4px">
-        <strong style="color:var(--fg)">Start:</strong> <span id="r-start"></span> — Weimar
-      </p>
-      <p id="r-dest-line" style="font-size:13px;color:var(--fg-muted);margin-bottom:4px"></p>
-      <p style="font-size:11px;color:var(--fg-subtle)">Route via OSRM · OpenStreetMap · Weimar</p>
+      <!-- Via text -->
+      <p id="r-via-cap" style="font-size:13px;color:var(--fg-muted);margin-bottom:12px"></p>
+
+      <!-- Map -->
+      <div id="map"></div>
+
+      <!-- Route meta -->
+      <div style="margin-bottom:28px" id="r-route-meta">
+        <p style="font-size:13px;color:var(--fg-muted);margin-bottom:4px">
+          <strong style="color:var(--fg)">Start:</strong> <span id="r-start"></span> — Weimar
+        </p>
+        <p id="r-dest-line" style="font-size:13px;color:var(--fg-muted);margin-bottom:4px"></p>
+        <p style="font-size:11px;color:var(--fg-subtle)">Route via OSRM · OpenStreetMap · Weimar</p>
+      </div>
     </div>
 
     <!-- Places along route -->
@@ -566,10 +562,10 @@
       <a id="maps-link" class="btn-secondary" href="#" target="_blank" rel="noopener noreferrer"
         style="display:flex;align-items:center;justify-content:center">Google Maps</a>
       <button class="btn-secondary" onclick="goTo('step1')">Rebuild</button>
-      <button class="btn-secondary" onclick="alert('Save feature coming soon.')">Save</button>
+      <button class="btn-secondary" onclick="saveAsImage()">Save</button>
     </div>
 
-    <p style="font-size:13px;color:var(--fg-subtle);text-align:center;font-weight:300">Have a great time out there.</p>
+    <p style="font-size:13px;color:var(--fg-subtle);text-align:center;font-weight:300">Have a great time!</p>
   </div>
 </div>
 
@@ -579,6 +575,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 const WEIMAR_BOUNDS = { minLat:50.93, maxLat:51.05, minLng:11.22, maxLng:11.45 };
 const WEIMAR_CENTER = { lat:50.9791, lng:11.3296 };
+
+const SPEEDS = { running:7, walking:4, cycling:12, other:4 };
 
 const WEIMAR_PLACES = {
   ilmpark:    { lat:50.9695,lng:11.3310,name:"Park an der Ilm",       type:"park",   tags:["green","waterside","shaded","car-free","quiet","scenic view"] },
@@ -715,12 +713,12 @@ function clearErr(id) {
   const splash = document.getElementById('screen-splash');
   const step1  = document.getElementById('screen-step1');
   step1.style.display = 'none'; // hide until splash done
-  setTimeout(()=>{ splash.classList.add('exit'); }, 2500);
+  setTimeout(()=>{ splash.classList.add('exit'); }, 9000);
   setTimeout(()=>{
     splash.style.display = 'none';
     step1.style.display = '';
     step1.classList.add('active');
-  }, 3100);
+  }, 10000);
 })();
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -817,10 +815,12 @@ function pickStart(type) {
   document.getElementById('s3-addr-btn').classList.toggle('active', type==='address');
   document.getElementById('s3-addr-wrap').classList.toggle('show', type==='address');
   if (type === 'address') {
+    document.getElementById('s3-hints').style.display = 'block';
     document.getElementById('s3-footer').style.display = 'block';
     document.getElementById('s3-btn').textContent = 'Continue';
     document.getElementById('s3-addr-input').focus();
   } else {
+    document.getElementById('s3-hints').style.display = 'none';
     // Auto-proceed with current location
     document.getElementById('s3-loc-btn').textContent = 'Getting location…';
     getBrowserCoord()
@@ -860,6 +860,12 @@ async function advanceS3() {
   }
 }
 
+function fillHint(inputId, val) {
+  document.getElementById(inputId).value = val;
+  clearErr('s3-err');
+  checkS3();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // STEP 4 — Route type
 // ═══════════════════════════════════════════════════════════════════════════
@@ -888,9 +894,11 @@ function pickEndMode(mode) {
   document.getElementById('s4-map-btn').classList.toggle('active', mode==='map');
   document.getElementById('s4-end-wrap').classList.toggle('show', mode==='type');
   if (mode === 'type') {
+    document.getElementById('s4-hints').style.display = 'block';
     document.getElementById('s4-end-input').focus();
     document.getElementById('s4-btn').disabled = document.getElementById('s4-end-input').value.trim().length === 0;
   } else {
+    document.getElementById('s4-hints').style.display = 'none';
     document.getElementById('s4-btn').disabled = false;
   }
 }
@@ -913,7 +921,7 @@ function advanceS4() {
 function initStep5() {
   S.selectedTags = [];
   S.locality = null;
-  document.getElementById('locality-btn').textContent = 'New place?';
+  document.getElementById('locality-btn').textContent = 'Know the city?';
   document.getElementById('locality-btn').classList.remove('set');
   document.getElementById('locality-menu').classList.remove('show');
   document.querySelectorAll('.locality-opt').forEach(b=>b.classList.remove('active'));
@@ -925,32 +933,49 @@ function initStep5() {
 
 function renderCategories() {
   const cats = CATEGORIES[S.activity] || {};
-  const wrap = document.getElementById('s5-categories');
-  wrap.innerHTML = '';
-  Object.entries(cats).forEach(([cat, tags])=>{
-    const row = document.createElement('div');
-    row.className = 'cat-row';
+  const btnRow = document.getElementById('s5-cat-btns');
+  const subWrap = document.getElementById('s5-subtags');
+  btnRow.innerHTML = ''; subWrap.innerHTML = '';
+  const openCats = new Set();
 
-    const hdr = document.createElement('button');
-    hdr.className = 'cat-hdr';
-    hdr.innerHTML = `<span class="cat-name">${cat}<span class="cat-count hidden" id="count-${cat}">0</span></span><span class="cat-arrow">↓</span>`;
-    hdr.onclick = ()=>{
-      hdr.classList.toggle('open');
-      tagsDiv.classList.toggle('open');
+  Object.entries(cats).forEach(([cat, tags]) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn'; btn.textContent = cat;
+    btn.id = 'catbtn-' + cat;
+    btn.onclick = () => {
+      if (openCats.has(cat)) {
+        openCats.delete(cat);
+        btn.classList.remove('active');
+      } else {
+        openCats.add(cat);
+        btn.classList.add('active');
+      }
+      renderSubtags(cats, openCats);
     };
+    btnRow.appendChild(btn);
 
-    const tagsDiv = document.createElement('div');
-    tagsDiv.className = 'cat-tags';
-    tags.forEach(tag=>{
+    // Subtag section
+    const div = document.createElement('div');
+    div.id = 'subtags-' + cat;
+    div.style.cssText = 'display:none; flex-wrap:wrap; gap:7px; margin-bottom:12px; padding:4px 0';
+    subWrap.appendChild(div);
+  });
+}
+
+function renderSubtags(cats, openCats) {
+  Object.entries(cats).forEach(([cat, tags]) => {
+    const div = document.getElementById('subtags-' + cat);
+    if (!div) return;
+    if (!openCats.has(cat)) { div.style.display = 'none'; return; }
+    div.style.display = 'flex';
+    div.innerHTML = '';
+    tags.forEach(tag => {
       const b = document.createElement('button');
-      b.className = 'tag-chip'; b.textContent = tag;
-      b.onclick = ()=>{ b.classList.toggle('active'); toggleTag(tag); };
-      tagsDiv.appendChild(b);
+      b.className = 'tag-chip' + (S.selectedTags.includes(tag) ? ' active' : '');
+      b.textContent = tag;
+      b.onclick = () => { b.classList.toggle('active'); toggleTag(tag); };
+      div.appendChild(b);
     });
-
-    row.appendChild(hdr);
-    row.appendChild(tagsDiv);
-    wrap.appendChild(row);
   });
 }
 
@@ -960,17 +985,7 @@ function toggleTag(tag) {
   } else {
     S.selectedTags.push(tag);
   }
-  updateCatCounts();
   updateSelectedRow();
-}
-
-function updateCatCounts() {
-  const cats = CATEGORIES[S.activity] || {};
-  Object.entries(cats).forEach(([cat, tags])=>{
-    const count = tags.filter(t=>S.selectedTags.includes(t)).length;
-    const el = document.getElementById('count-' + cat);
-    if (el) { el.textContent = count; el.classList.toggle('hidden', count===0); }
-  });
 }
 
 function updateSelectedRow() {
@@ -1020,12 +1035,43 @@ function parseDistKm(activity, param) {
   const p = param.toLowerCase();
   const km = p.match(/(\d+(?:\.\d+)?)\s*km/); if(km) return parseFloat(km[1]);
   const hr = p.match(/(\d+(?:\.\d+)?)\s*h(?:our)?/);
-  if(hr){ const h=parseFloat(hr[1]); return activity==='cycling'?h*20:activity==='running'?h*10:h*5; }
+  if(hr){ const h=parseFloat(hr[1]); const spd=SPEEDS[activity]||5; return h*spd; }
   const min = p.match(/(\d+)\s*min/);
-  if(min){ const m=parseInt(min[1]); return activity==='cycling'?(m/60)*20:activity==='running'?(m/60)*10:(m/60)*5; }
+  if(min){ const m=parseInt(min[1]); const spd=SPEEDS[activity]||5; return (m/60)*spd; }
   const steps = p.match(/([\d,]+)\s*steps?/);
   if(steps) return parseInt(steps[1].replace(/,/g,''))*0.00075;
   return {running:5,cycling:15,walking:4,other:3}[activity]||5;
+}
+
+function calcDuration(distKm, activity) {
+  const spd = SPEEDS[activity] || 5;
+  const h = distKm / spd;
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  return hh > 0 ? hh + 'h ' + mm + 'min' : '~' + mm + ' min';
+}
+
+function bearingTo(lat1, lng1, lat2, lng2) {
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const la1 = lat1 * Math.PI / 180;
+  const la2 = lat2 * Math.PI / 180;
+  const y = Math.sin(dLng) * Math.cos(la2);
+  const x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dLng);
+  return Math.atan2(y, x);
+}
+
+function projectPoint(lat, lng, bearing, distKm) {
+  const R = 6371;
+  const d = distKm / R;
+  const la = lat * Math.PI / 180;
+  const lo = lng * Math.PI / 180;
+  const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(bearing));
+  const lo2 = lo + Math.atan2(Math.sin(bearing) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+  return { lat: la2 * 180 / Math.PI, lng: lo2 * 180 / Math.PI };
+}
+
+function getMidPoint(lat1, lng1, lat2, lng2) {
+  return { lat: (lat1 + lat2) / 2, lng: (lng1 + lng2) / 2 };
 }
 
 function selectWaypoint(startLat, startLng, activity, distKm, routingTags) {
@@ -1059,7 +1105,6 @@ function placesAlongRoute(geo) {
 }
 
 function formatDist(m){ return m>=1000?`${(m/1000).toFixed(1)} km`:`${m} m`; }
-function formatDur(s){ const h=Math.floor(s/3600),m=Math.round((s%3600)/60); return h>0?`${h}h ${m}min`:`~${m} min`; }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GEOCODING
@@ -1208,7 +1253,17 @@ async function generateRoute() {
       const distKm = parseDistKm(S.activity, S.mainParam);
       const wp = selectWaypoint(lat,lng,S.activity,distKm,routingTags);
       destName = wp.name; isLoop = true;
-      osmRoute = await osrmRoute(profile,[{lat,lng},{lat:wp.lat,lng:wp.lng},{lat,lng}]);
+
+      // True loop: add perpendicular waypoint to force different return path
+      const bearing = bearingTo(lat, lng, wp.lat, wp.lng);
+      const mid = getMidPoint(lat, lng, wp.lat, wp.lng);
+      const perpDist = distKm * 0.22;
+      const wp2L = projectPoint(mid.lat, mid.lng, bearing + Math.PI/2, perpDist);
+      const wp2R = projectPoint(mid.lat, mid.lng, bearing - Math.PI/2, perpDist);
+      const dL = haversineKm(WEIMAR_CENTER.lat, WEIMAR_CENTER.lng, wp2L.lat, wp2L.lng);
+      const dR = haversineKm(WEIMAR_CENTER.lat, WEIMAR_CENTER.lng, wp2R.lat, wp2R.lng);
+      const wp2 = dL < dR ? wp2L : wp2R;
+      osmRoute = await osrmRoute(profile, [{lat,lng}, {lat:wp.lat,lng:wp.lng}, {lat:wp2.lat,lng:wp2.lng}, {lat,lng}]);
     } else {
       isLoop = false;
       if(S.endMode==='type'&&S.endAddress){
@@ -1226,14 +1281,30 @@ async function generateRoute() {
     S.routeGeometry = geo; S.destName = destName;
     S.mapsUrl = buildMapsUrl(geo, S.activity);
 
+    // Compute actual distance and check deviation
+    const actualDistKm = osmRoute.distance / 1000;
+    const requestedDistKm = parseDistKm(S.activity, S.mainParam);
+    const ratio = actualDistKm / requestedDistKm;
+    const msgEl = document.getElementById('r-soft-msg');
+    if (ratio > 1.25) {
+      msgEl.textContent = "Your route turned out a little longer than planned — but we think you'll love it!";
+      msgEl.style.display = 'block';
+    } else if (ratio < 0.75) {
+      msgEl.textContent = "Your route turned out a little shorter than planned — but we think you'll love it!";
+      msgEl.style.display = 'block';
+    } else {
+      msgEl.style.display = 'none';
+    }
+
     const endCoord = geo[geo.length-1];
     const pois = await fetchPOIs(endCoord[1], endCoord[0], S.activity);
 
     // Populate result screen
     document.getElementById('r-activity').textContent = ACTIVITY_LABELS[S.activity];
     document.getElementById('r-via').textContent = destName?`via ${destName}`:'';
+    document.getElementById('r-via-cap').textContent = destName?`via ${destName}`:'';
     document.getElementById('r-dist').textContent = formatDist(Math.round(osmRoute.distance));
-    document.getElementById('r-time').textContent = formatDur(Math.round(osmRoute.duration));
+    document.getElementById('r-time').textContent = calcDuration(osmRoute.distance/1000, S.activity);
     document.getElementById('r-type').textContent = isLoop?'Loop':'One-way';
     document.getElementById('r-start').textContent = S.startLabel||'Your location';
     const dl = document.getElementById('r-dest-line');
@@ -1301,6 +1372,31 @@ function initMap(geo, pois, startLabel, destName) {
 }
 
 function openMaps(){ if(S.mapsUrl) window.open(S.mapsUrl,'_blank'); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SAVE AS IMAGE
+// ═══════════════════════════════════════════════════════════════════════════
+async function saveAsImage() {
+  const el = document.getElementById('r-capture-area');
+  const btn = event.target;
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  try {
+    const canvas = await html2canvas(el, {
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#ffffff',
+      scale: 2,
+      useCORS: true,
+      allowTaint: false
+    });
+    const link = document.createElement('a');
+    link.download = `space-route-${S.activity}-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(e) {
+    alert('Could not save image. Please try again.');
+  } finally {
+    btn.textContent = 'Save'; btn.disabled = false;
+  }
+}
 </script>
 </body>
 </html>
