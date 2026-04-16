@@ -172,7 +172,7 @@ export default function Step6Screen({ state, onNext }: Step6Props) {
   if (error) {
     return (
       <div
-        className="h-full overflow-y-auto flex flex-col items-center justify-center max-w-sm mx-auto px-5 step-enter"
+        className="h-full w-full overflow-y-auto flex flex-col items-center justify-center max-w-sm mx-auto px-5 step-enter"
         style={{ background: "var(--bg)", color: "var(--fg)" }}
       >
         <p className="text-sm mb-6 text-center" style={{ color: "var(--fg-muted)" }}>
@@ -191,7 +191,7 @@ export default function Step6Screen({ state, onNext }: Step6Props) {
 
   return (
     <div
-      className="h-full overflow-y-auto flex flex-col items-center justify-center max-w-sm mx-auto px-5 step-enter"
+      className="h-full w-full overflow-y-auto flex flex-col items-center justify-center max-w-sm mx-auto px-5 step-enter"
       style={{ background: "var(--bg)", color: "var(--fg)" }}
     >
       {/* Spinner */}

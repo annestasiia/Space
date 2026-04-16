@@ -87,7 +87,7 @@ export default function Step3Screen({ state, onNext, onBack }: Step3Props) {
 
   return (
     <div
-      className="h-full overflow-y-auto flex flex-col max-w-sm mx-auto px-5 step-enter"
+      className="h-full w-full overflow-y-auto flex flex-col max-w-sm mx-auto px-5 step-enter"
       style={{ background: "var(--bg)", color: "var(--fg)" }}
     >
       {/* Header */}

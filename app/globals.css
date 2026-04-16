@@ -40,6 +40,7 @@
 html {
   height: 100svh;
   overflow: hidden;
+  overflow-x: hidden;
 }
 
 body {
@@ -47,15 +48,10 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* Fixed at exact 100svh — svh does not change when keyboard opens/closes.
-     We use explicit top/left/width/height instead of inset:0 because
-     bottom:0 on iOS tracks the visual viewport and would cause resize. */
-  position: fixed;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100svh;
   overflow: hidden;
+  overflow-x: hidden;
   transition: background 0.3s ease, color 0.3s ease;
 }
 
