@@ -38,9 +38,6 @@
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
 html {
-  /* 100svh = "small" viewport height — fixed value, does NOT change
-     when the iOS/Android keyboard opens or closes. This prevents the
-     layout from reflowing mid-transition when the keyboard dismisses. */
   height: 100svh;
   overflow: hidden;
 }
@@ -50,10 +47,9 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* position:fixed + explicit height:100svh — svh is a constant that does
-     NOT track the visual viewport when the keyboard opens/closes.
-     We avoid inset:0 / bottom:0 because on iOS those track the visual
-     viewport, causing the body to resize when the keyboard dismisses. */
+  /* Fixed at exact 100svh — svh does not change when keyboard opens/closes.
+     We use explicit top/left/width/height instead of inset:0 because
+     bottom:0 on iOS tracks the visual viewport and would cause resize. */
   position: fixed;
   top: 0;
   left: 0;
