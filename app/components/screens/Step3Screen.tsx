@@ -23,6 +23,11 @@ export default function Step3Screen({ state, onNext, onBack }: Step3Props) {
 
   async function handleProceed() {
     if (!startType) return;
+    // Dismiss keyboard NOW, before any async work, so it is fully
+    // closed before Step4 renders — prevents layout shift on transition.
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setLocationError(null);
     setIsResolving(true);
 

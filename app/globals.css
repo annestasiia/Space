@@ -50,10 +50,15 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* position:fixed + inset:0 locks body to the initial viewport size.
-     Unlike height:100%, it is not recalculated when the keyboard toggles. */
+  /* position:fixed + explicit height:100svh — svh is a constant that does
+     NOT track the visual viewport when the keyboard opens/closes.
+     We avoid inset:0 / bottom:0 because on iOS those track the visual
+     viewport, causing the body to resize when the keyboard dismisses. */
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100svh;
   overflow: hidden;
   transition: background 0.3s ease, color 0.3s ease;
 }
