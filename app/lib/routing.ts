@@ -8,14 +8,20 @@
  *   bike  → cycling
  *
  * Route strategy:
- *   - Running / Walking / Cycling: roundtrip via a selected Weimar waypoint
- *     URL: /route/v1/{profile}/lng1,lat1;wp_lng,wp_lat;lng1,lat1
- *   - Yoga: one-way walk to selected park
- *     URL: /route/v1/foot/lng1,lat1;dest_lng,dest_lat
+ *   - Loop: start → N → E → S → W → start (4 waypoints around the start)
+ *   - One-way: start → destination
  */
 
 import { ActivityType } from "../types";
 import { RouteResult, Coordinate } from "../types/route";
+
+// Fixed average speeds per activity (km/h)
+export const ACTIVITY_SPEEDS: Record<string, number> = {
+  running: 7,
+  walking: 4,
+  cycling: 12,
+  other: 4,
+};
 
 const OSRM_BASE = "https://router.project-osrm.org";
 
@@ -77,8 +83,43 @@ async function osrmRoute(
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
+ * Build a true loop route via N/E/S/W waypoints around the start.
+ * start → North → East → South → West → start
+ * Each waypoint is at ~totalDistanceKm/4 from the previous,
+ * placed in cardinal directions so the route never retraces itself.
+ */
+export async function buildLoopRoute(
+  activity: ActivityType,
+  start: Coordinate,
+  totalDistanceKm: number
+): Promise<RouteResult> {
+  const profile = activityToProfile(activity);
+
+  // Radius: place each waypoint at ~D/4 from start in each cardinal direction
+  const radius = totalDistanceKm / 4;
+
+  // Convert km to degree offsets
+  const latPerKm = 1 / 111;
+  const lngPerKm = 1 / (111 * Math.cos((start.lat * Math.PI) / 180));
+
+  const north: Coordinate = { lat: start.lat + radius * latPerKm, lng: start.lng };
+  const east: Coordinate  = { lat: start.lat, lng: start.lng + radius * lngPerKm };
+  const south: Coordinate = { lat: start.lat - radius * latPerKm, lng: start.lng };
+  const west: Coordinate  = { lat: start.lat, lng: start.lng - radius * lngPerKm };
+
+  // Loop: start → N → E → S → W → start (approach from different side)
+  const result = await osrmRoute(profile, [start, north, east, south, west, start], true);
+
+  // Override OSRM travel time with fixed-speed calculation
+  const speedKmh = ACTIVITY_SPEEDS[activity] ?? 4;
+  result.durationSeconds = Math.round((result.distanceMeters / 1000 / speedKmh) * 3600);
+
+  return result;
+}
+
+/**
  * Build a roundtrip route: start → waypoint → start.
- * Used for running, walking, cycling.
+ * Kept for backwards compatibility with one-off waypoint routing.
  */
 export async function buildRoundtripRoute(
   activity: ActivityType,
@@ -86,13 +127,16 @@ export async function buildRoundtripRoute(
   waypoint: Coordinate
 ): Promise<RouteResult> {
   const profile = activityToProfile(activity);
-  // Three-point route: start → waypoint → start
-  return osrmRoute(profile, [start, waypoint, start], true);
+  const result = await osrmRoute(profile, [start, waypoint, start], true);
+
+  const speedKmh = ACTIVITY_SPEEDS[activity] ?? 4;
+  result.durationSeconds = Math.round((result.distanceMeters / 1000 / speedKmh) * 3600);
+
+  return result;
 }
 
 /**
  * Build a one-way route: start → destination.
- * Used for yoga (walk to the park).
  */
 export async function buildOneWayRoute(
   activity: ActivityType,
@@ -100,7 +144,13 @@ export async function buildOneWayRoute(
   destination: Coordinate
 ): Promise<RouteResult> {
   const profile = activityToProfile(activity);
-  return osrmRoute(profile, [start, destination], false);
+  const result = await osrmRoute(profile, [start, destination], false);
+
+  // Override OSRM travel time with fixed-speed calculation
+  const speedKmh = ACTIVITY_SPEEDS[activity] ?? 4;
+  result.durationSeconds = Math.round((result.distanceMeters / 1000 / speedKmh) * 3600);
+
+  return result;
 }
 
 // ── Formatting helpers ────────────────────────────────────────────────────────

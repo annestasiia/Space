@@ -5,10 +5,9 @@ import { AppState, ActivityType } from "../../types";
 import { ACTIVITY_LABELS, TAG_TO_ROUTING } from "../../data/routes";
 import {
   parseRequestedDistanceKm,
-  selectWaypoint,
   selectOneWayDestination,
 } from "../../lib/weimar";
-import { buildRoundtripRoute, buildOneWayRoute } from "../../lib/routing";
+import { buildLoopRoute, buildOneWayRoute } from "../../lib/routing";
 import { fetchNearbyPOIs } from "../../lib/overpass";
 import { geocodeAddress } from "../../lib/geocoding";
 
@@ -99,18 +98,27 @@ export default function Step6Screen({ state, onNext }: Step6Props) {
       let destinationName = "";
 
       if (state.routeType === "loop") {
-        const waypoint = selectWaypoint(
-          startCoord.lat,
-          startCoord.lng,
+        routeResult = await buildLoopRoute(activity, startCoord, distKm);
+        destinationName = "";
+
+        // Soft message if actual distance differs from requested by >15%
+        const actualKm = routeResult.distanceMeters / 1000;
+        const tolerance = 0.15;
+        let routeMessage: string | null = null;
+        if (actualKm > distKm * (1 + tolerance)) {
+          routeMessage = "Your route turned out a little longer than planned — but we think you'll love it!";
+        } else if (actualKm < distKm * (1 - tolerance)) {
+          routeMessage = "Your route turned out a little shorter than planned — but we think you'll love it!";
+        }
+
+        const pois = await fetchNearbyPOIs(
+          routeResult.endCoord.lat,
+          routeResult.endCoord.lng,
           activity,
-          distKm,
-          routingTags
+          500
         );
-        destinationName = waypoint.name;
-        routeResult = await buildRoundtripRoute(activity, startCoord, {
-          lat: waypoint.lat,
-          lng: waypoint.lng,
-        });
+        onNext({ routeResult, destinationName, pois, routeError: null, routeMessage, screen: "result" });
+        return;
       } else {
         // One-way
         if (state.endAddress && state.endAddress.trim().length > 0) {
@@ -149,6 +157,7 @@ export default function Step6Screen({ state, onNext }: Step6Props) {
         destinationName,
         pois,
         routeError: null,
+        routeMessage: null,
         screen: "result",
       });
     } catch (err: unknown) {

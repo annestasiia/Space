@@ -32,6 +32,7 @@ const INITIAL_STATE: AppState = {
   destinationName: "",
   pois: [],
   routeError: null,
+  routeMessage: null,
 };
 
 export default function Home() {

@@ -13,7 +13,7 @@ interface ResultScreenProps {
 }
 
 export default function ResultScreen({ state, onReset }: ResultScreenProps) {
-  const { activity, routeResult, pois, selectedTags, startLabel, destinationName } = state;
+  const { activity, routeResult, pois, selectedTags, startLabel, destinationName, routeMessage } = state;
   const route = routeResult!;
   const activityLabel = ACTIVITY_LABELS[activity!];
 
@@ -58,6 +58,13 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
             </p>
           )}
         </div>
+
+        {/* Soft route message */}
+        {routeMessage && (
+          <p className="text-sm mb-5 italic" style={{ color: "var(--fg-muted)" }}>
+            {routeMessage}
+          </p>
+        )}
 
         {/* Stats card */}
         <div

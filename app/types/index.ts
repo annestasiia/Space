@@ -28,6 +28,7 @@ export interface AppState {
   destinationName: string;
   pois: POIResult[];
   routeError: string | null;
+  routeMessage: string | null;
 }
 
 export type { Coordinate, RouteResult, POIResult };

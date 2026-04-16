@@ -14,7 +14,7 @@ export default function SplashScreen({ onFinish, theme, onThemeToggle }: SplashS
 
   useEffect(() => {
     const t1 = setTimeout(() => setExiting(true), 2500);
-    const t2 = setTimeout(() => onFinish(), 3100);
+    const t2 = setTimeout(() => onFinish(), 3300);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -25,7 +25,7 @@ export default function SplashScreen({ onFinish, theme, onThemeToggle }: SplashS
 
   return (
     <div
-      className={`fixed inset-0 flex flex-col items-center justify-center transition-opacity duration-500 ${
+      className={`fixed inset-0 flex flex-col items-center justify-center transition-opacity duration-700 ${
         exiting ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       style={{ background: "var(--bg)" }}

@@ -141,18 +141,18 @@ export function parseRequestedDistanceKm(activity: ActivityType, param: string):
   const hourMatch = p.match(/(\d+(?:\.\d+)?)\s*h(?:our)?/);
   if (hourMatch) {
     const hours = parseFloat(hourMatch[1]);
-    if (activity === "cycling") return hours * 20;
-    if (activity === "running")  return hours * 10;
-    return hours * 5;
+    if (activity === "cycling") return hours * 12;
+    if (activity === "running")  return hours * 7;
+    return hours * 4; // walking / other
   }
 
   // Minutes
   const minMatch = p.match(/(\d+)\s*min/);
   if (minMatch) {
     const min = parseInt(minMatch[1]);
-    if (activity === "cycling") return (min / 60) * 20; // ~20km/h
-    if (activity === "running")  return (min / 60) * 10; // ~10km/h
-    return (min / 60) * 5; // walking ~5km/h
+    if (activity === "cycling") return (min / 60) * 12;
+    if (activity === "running")  return (min / 60) * 7;
+    return (min / 60) * 4; // walking ~4km/h
   }
 
   // Steps
