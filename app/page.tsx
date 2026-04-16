@@ -65,7 +65,7 @@ export default function Home() {
   const { screen } = state;
 
   return (
-    <main>
+    <main className="h-full">
       {screen === "splash" && (
         <SplashScreen
           onFinish={() => updateState({ screen: "step1" })}

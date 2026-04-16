@@ -47,7 +47,7 @@ export default function Step5Screen({ state, onNext, onBack }: Step5Props) {
 
   return (
     <div
-      className="min-h-[100dvh] flex flex-col max-w-sm mx-auto step-enter"
+      className="h-full overflow-y-auto flex flex-col max-w-sm mx-auto step-enter"
       style={{ background: "var(--bg)", color: "var(--fg)" }}
     >
       {/* Header */}

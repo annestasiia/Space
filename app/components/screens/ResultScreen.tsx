@@ -25,7 +25,7 @@ export default function ResultScreen({ state, onReset }: ResultScreenProps) {
 
   return (
     <div
-      className="min-h-[100dvh] flex flex-col"
+      className="h-full flex flex-col"
       style={{ background: "var(--bg)", color: "var(--fg)" }}
     >
       <div className="flex-1 max-w-sm mx-auto w-full px-5 scroll-smooth overflow-y-auto">
