@@ -38,7 +38,10 @@
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
 html {
-  height: 100%;
+  /* 100svh = "small" viewport height — fixed value, does NOT change
+     when the iOS/Android keyboard opens or closes. This prevents the
+     layout from reflowing mid-transition when the keyboard dismisses. */
+  height: 100svh;
   overflow: hidden;
 }
 
@@ -47,7 +50,10 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
-  height: 100%;
+  /* position:fixed + inset:0 locks body to the initial viewport size.
+     Unlike height:100%, it is not recalculated when the keyboard toggles. */
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   transition: background 0.3s ease, color 0.3s ease;
 }
@@ -93,18 +99,12 @@ input, textarea, select {
 
 /* ── Step fade-in animation ──────────────────────────────────────────────── */
 @keyframes stepEnter {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .step-enter {
-  animation: stepEnter 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: stepEnter 0.55s ease-out both;
 }
 
 /* ── Splash screen ───────────────────────────────────────────────────────── */
