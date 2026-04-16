@@ -120,7 +120,6 @@ export default function Step2Screen({ state, onNext, onBack }: Step2Props) {
                 value={custom}
                 onChange={(e) => setCustom(e.target.value)}
                 placeholder={mode === "distance" ? 'e.g. "7 km"' : 'e.g. "45 min"'}
-                autoFocus
                 className="w-full px-4 py-3.5 border rounded-xl text-base focus:outline-none transition-colors"
                 style={{
                   background: "var(--input-bg)",

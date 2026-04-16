@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import IOSZoomFix from "./components/ui/IOSZoomFix";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full overflow-hidden antialiased`}
     >
-      <body className="h-full overflow-hidden flex flex-col">{children}</body>
+      <body className="h-full overflow-hidden flex flex-col">
+        <IOSZoomFix />
+        {children}
+      </body>
     </html>
   );
 }

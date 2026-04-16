@@ -147,7 +147,6 @@ export default function Step3Screen({ state, onNext, onBack }: Step3Props) {
                 setLocationError(null);
               }}
               placeholder="Street, place or landmark in Weimar"
-              autoFocus
               className="w-full px-4 py-3.5 border rounded-xl text-base focus:outline-none transition-colors"
               style={{
                 background: "var(--input-bg)",

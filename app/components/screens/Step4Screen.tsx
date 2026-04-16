@@ -142,7 +142,6 @@ export default function Step4Screen({ state, onNext, onBack }: Step4Props) {
                 value={endAddress}
                 onChange={(e) => setEndAddress(e.target.value)}
                 placeholder="Destination address in Weimar"
-                autoFocus
                 className="mt-1 w-full px-4 py-3.5 border rounded-xl text-base focus:outline-none transition-colors"
                 style={{
                   background: "var(--input-bg)",
